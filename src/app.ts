@@ -1,7 +1,7 @@
 import express, { Response,Request, NextFunction } from 'express';
 import {port} from './app/config/site.config';
 import {instance} from './utils/multer.utils';
-import api from './routes/routes';
+import apiRoutes from './routes/routes';
 import cors from 'cors';
 import { formatResponse } from './utils/response.util';
 
@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: false}));
 app.use(cors());
 
 
-app.use('/api',api);
+app.use(apiRoutes);
 
 // for 404 api 
 app.get('/api/*', (req:Request, res:Response)=>{

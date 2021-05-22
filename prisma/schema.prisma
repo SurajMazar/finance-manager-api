@@ -30,9 +30,9 @@ model Category {
   description String?    @db.LongText
   incomes     Income[]
   epenses     Expense[]
-  parent_id   Int
+  parent_id   Int?
   type        Type
-  category    Category   @relation(fields: [parent_id], references: [id])
+  category    Category?   @relation(fields: [parent_id], references: [id])
   createdAt   DateTime
   updatedAt   DateTime
   Category    Category[] @relation("CategoryToCategory")

@@ -1,4 +1,4 @@
-import router from './api/index.routes';
+import router from '../utils/route.util';
 import api from './api/index.routes';
 
 

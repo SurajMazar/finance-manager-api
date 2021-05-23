@@ -6,7 +6,9 @@ import { incomeRequest } from "../../app/http/requests/income.request";
 const router = express.Router();
 
 router.use(jwtMiddleWare);
+router.get('/',Income.index);
 router.post('/store',incomeRequest(),validate,Income.store);
+router.put('/update/:id',incomeRequest(),validate,Income.update);
 
 
 export default router;

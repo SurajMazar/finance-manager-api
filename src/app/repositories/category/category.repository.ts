@@ -7,15 +7,17 @@ import {CategoryRepositoryInterface} from './category.interface'
 
 export class CategoryRepository implements CategoryRepositoryInterface{
 
-
+  
   //async list category with category
   async index(req:Request){
     try{
       const page = Number(req.query.page);
-      const keyword = (req.query.keyword)?.toString() || ''; // keyword for search query
+      const keyword = (req.query.keyword)?.toString() || '';
+      const type:'income'|'expense' = req.query.type as "income"|"expense";
       const categories = await prisma.category.findMany({
         where:{
           parent_id:null,
+          type:type,
           OR:{
             name:{contains:keyword},
           },

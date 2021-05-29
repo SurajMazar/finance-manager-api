@@ -1,8 +1,8 @@
 import { Request } from 'express';
-import { isNull } from 'util';
+import { getAuthUser } from '../../../utils/jwt.utils';
 import prisma from '../../../utils/prisma.utils';
-import { paginate } from '../../../utils/response.util';
-import { ItemPerPage } from '../../config/site.config';
+// import { paginate } from '../../../utils/response.util';
+// import { ItemPerPage } from '../../config/site.config';
 import {CategoryRepositoryInterface} from './category.interface'
 
 export class CategoryRepository implements CategoryRepositoryInterface{
@@ -14,10 +14,12 @@ export class CategoryRepository implements CategoryRepositoryInterface{
       const page = Number(req.query.page);
       const keyword = (req.query.keyword)?.toString() || '';
       const type:'income'|'expense' = req.query.type as "income"|"expense";
+      const user = getAuthUser(req);
       const categories = await prisma.category.findMany({
         where:{
           parent_id:null,
           type:type,
+          userId:user.id,
           OR:{
             name:{contains:keyword},
           },
@@ -28,14 +30,20 @@ export class CategoryRepository implements CategoryRepositoryInterface{
         include:{
           Category:true
         },
-        skip:page * ItemPerPage - ItemPerPage || 0,
+        // skip:page * ItemPerPage - ItemPerPage || 0,
       });
       const total = await prisma.category.count({
         where:{
           parent_id:null,
-        }
+          type:type,
+          userId:user.id,
+          OR:{
+            name:{contains:keyword},
+          },
+        },
       });
-      return paginate('categories',page,total,categories);
+      return categories;
+      // return paginate('categories',page,total,categories);
     }catch(e){
       throw e;
     }
@@ -52,6 +60,8 @@ export class CategoryRepository implements CategoryRepositoryInterface{
       } = req.body;
       const cat_id = Number(parent_id);
 
+      const user = getAuthUser(req);
+
       const category = prisma.category.create({ 
         data:{
             name:name,
@@ -60,7 +70,8 @@ export class CategoryRepository implements CategoryRepositoryInterface{
             createdAt:new Date(),
             updatedAt:new Date(),
             parent_id:cat_id? cat_id :null,
-          }
+            userId:user.id
+          },
         }); 
       return category;
     }catch(e){
@@ -91,7 +102,10 @@ export class CategoryRepository implements CategoryRepositoryInterface{
           type:type,
           updatedAt:new Date(),
           parent_id:cat_id? cat_id :null,
-        }
+        },
+        include:{
+          Category:true
+        },
       });
       return category;
     }catch(e){

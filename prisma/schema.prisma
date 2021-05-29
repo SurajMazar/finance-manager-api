@@ -17,6 +17,9 @@ model User {
   password  String
   createdAt DateTime
   updatedAt DateTime
+  category  Category[]
+  incomes     Income[]
+  expenses     Expense[]
 }
 
 enum Type {
@@ -29,13 +32,15 @@ model Category {
   name        String
   description String?    @db.LongText
   incomes     Income[]
-  epenses     Expense[]
+  expenses     Expense[]
   parent_id   Int?
   type        Type
   category    Category?   @relation(fields: [parent_id], references: [id])
   createdAt   DateTime
   updatedAt   DateTime
   Category    Category[] @relation("CategoryToCategory")
+  userId      Int
+  createdBy   User @relation(fields: [userId],references:[id])
 }
 
 model Income {
@@ -46,6 +51,8 @@ model Income {
   income_cat Category @relation(fields: [cat_id], references: [id])
   createdAt  DateTime
   updatedAt  DateTime
+  userId      Int
+  createdBy   User @relation(fields: [userId],references:[id])
 }
 
 model Expense {
@@ -56,4 +63,6 @@ model Expense {
   expense_cat Category @relation(fields: [cat_id], references: [id])
   createdAt   DateTime
   updatedAt   DateTime
+  userId      Int
+  createdBy   User @relation(fields: [userId],references:[id])
 }

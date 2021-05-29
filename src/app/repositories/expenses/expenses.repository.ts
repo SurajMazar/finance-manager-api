@@ -1,13 +1,12 @@
-import { Request } from 'express-serve-static-core';
+import { Request } from 'express';
 import { getAuthUser } from '../../../utils/jwt.utils';
 import prisma from '../../../utils/prisma.utils';
 import { paginate } from '../../../utils/response.util';
 import { ItemPerPage } from '../../config/site.config';
-import {IncomeRepositoryInterface} from './income.interface';
+import {ExpenseRepositoryInterface} from './expenses.interface';
 
 
-export class IncomeRepository implements IncomeRepositoryInterface{
-
+export class ExpensesRepository implements ExpenseRepositoryInterface{
 
 
   async index(req:Request){
@@ -18,7 +17,6 @@ export class IncomeRepository implements IncomeRepositoryInterface{
       const endDate = new Date(new Date().setDate(new Date(req?.query?.end_date as string).getDate() + 1)) || undefined;
       let category:any = req.query.category || undefined;
 
-      const user = getAuthUser(req);
 
       let cat:Array<number> | number | undefined = [];
       if(category){
@@ -34,8 +32,9 @@ export class IncomeRepository implements IncomeRepositoryInterface{
       }else{
         cat = undefined;
       }
+      const user = getAuthUser(req)
 
-      const incomes = await prisma.income.findMany({
+      const incomes = await prisma.expense.findMany({
         where:{
           cat_id:{
             in:cat,
@@ -53,18 +52,17 @@ export class IncomeRepository implements IncomeRepositoryInterface{
           createdAt:'desc'
         },
         include:{
-          income_cat:true
+          expense_cat:true
         },
         skip:page * ItemPerPage - ItemPerPage || 0,
       });
       
-      const total = await prisma.income.count({where:{cat_id:{in:cat,},userId:user.id,OR:{title:{contains:keyword},},createdAt: {gte:startDate,lt:endDate},},});
+      const total = await prisma.expense.count({where:{cat_id:{in:cat,},userId:user.id,OR:{title:{contains:keyword},},createdAt: {gte:startDate,lt:endDate},},});
       return paginate('income',page,total,incomes);
     }catch(e){
       throw new Error(e);
     }
   }
-  
 
   async store(req:Request){
     try{
@@ -73,10 +71,8 @@ export class IncomeRepository implements IncomeRepositoryInterface{
         amount,
         cat_id
       } = req.body;
-
       const user = getAuthUser(req)
-
-      const income = await prisma.income.create({
+      const expense = await prisma.expense.create({
         data:{
           title:title,
           amount:parseFloat(amount),
@@ -86,11 +82,12 @@ export class IncomeRepository implements IncomeRepositoryInterface{
           userId:user.id
         }
       });
-      return income;
+      return expense;
     }catch(e){
       throw e;
     }
   }
+
 
   async update(req:Request){
     try{
@@ -100,7 +97,7 @@ export class IncomeRepository implements IncomeRepositoryInterface{
         cat_id
       } = req.body;
       const id = Number(req.params.id);
-      const income = await prisma.income.update({
+      const expense = await prisma.expense.update({
         where:{
           id:id
         },
@@ -111,10 +108,9 @@ export class IncomeRepository implements IncomeRepositoryInterface{
           cat_id:Number(cat_id),
         }
       });
-      return income;
+      return expense;
     }catch(e){
       throw e;
     }
   }
-
 }

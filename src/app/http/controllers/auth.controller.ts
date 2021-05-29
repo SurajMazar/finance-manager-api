@@ -23,7 +23,7 @@ export class AuthController {
       })
       // console.log(user)
     }catch(e){
-      res.status(500).json(formatResponse(e,false));
+      res.status(500).json(formatResponse({error:e},false));
     }
   }
 

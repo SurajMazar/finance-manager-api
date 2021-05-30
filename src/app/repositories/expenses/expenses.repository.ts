@@ -1,8 +1,8 @@
 import { Request } from 'express';
 import { getAuthUser } from '../../../utils/jwt.utils';
 import prisma from '../../../utils/prisma.utils';
-import { paginate } from '../../../utils/response.util';
-import { ItemPerPage } from '../../config/site.config';
+// import { paginate } from '../../../utils/response.util';
+// import { ItemPerPage } from '../../config/site.config';
 import {ExpenseRepositoryInterface} from './expenses.interface';
 
 
@@ -11,10 +11,8 @@ export class ExpensesRepository implements ExpenseRepositoryInterface{
 
   async index(req:Request){
     try{    
-      const page = Number(req.query.page);
+      const month =req.query.month ? new Date(req.query.month as string) : new Date();
       const keyword = (req.query.keyword)?.toString() || '';
-      const startDate = new Date(new Date().setDate(new Date(req?.query?.start_date as string).getDate() - 1)) || undefined;
-      const endDate = new Date(new Date().setDate(new Date(req?.query?.end_date as string).getDate() + 1)) || undefined;
       let category:any = req.query.category || undefined;
 
 
@@ -36,29 +34,31 @@ export class ExpensesRepository implements ExpenseRepositoryInterface{
 
       const incomes = await prisma.expense.findMany({
         where:{
-          cat_id:{
-            in:cat,
-          },
           userId:user.id,
           OR:{
             title:{contains:keyword},
           },
-          createdAt: {
-            gte: startDate,
-            lt:  endDate
+          cat_id:{
+            in:cat
           },
+          createdAt:{
+            gt:new Date(month.getFullYear(), month.getMonth(), 1),
+            lt:new Date(month.getFullYear(), month.getMonth() + 1, 1)
+          }
         },
         orderBy:{
           createdAt:'desc'
         },
         include:{
-          expense_cat:true
+          category:true
         },
-        skip:page * ItemPerPage - ItemPerPage || 0,
+        // skip:page * ItemPerPage - ItemPerPage || 0,
       });
-      
-      const total = await prisma.expense.count({where:{cat_id:{in:cat,},userId:user.id,OR:{title:{contains:keyword},},createdAt: {gte:startDate,lt:endDate},},});
-      return paginate('income',page,total,incomes);
+      return incomes;
+      // const total = await prisma.expense.count({where:{cat_id:{
+      //   in:cat
+      // },userId:user.id,OR:{title:{contains:keyword},},createdAt: {gte:startDate,lt:endDate},},});
+      // return paginate('income',page,total,incomes);
     }catch(e){
       throw new Error(e);
     }
@@ -78,8 +78,11 @@ export class ExpensesRepository implements ExpenseRepositoryInterface{
           amount:parseFloat(amount),
           createdAt:new Date(),
           updatedAt:new Date(),
+          userId:user.id,
           cat_id:Number(cat_id),
-          userId:user.id
+        },
+        include:{
+          category:true
         }
       });
       return expense;
@@ -105,7 +108,10 @@ export class ExpensesRepository implements ExpenseRepositoryInterface{
           title:title,
           amount:parseFloat(amount),
           updatedAt:new Date(),
-          cat_id:Number(cat_id),
+          category:cat_id,
+        },
+        include:{
+          category:true
         }
       });
       return expense;

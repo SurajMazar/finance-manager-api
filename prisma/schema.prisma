@@ -47,8 +47,8 @@ model Income {
   id         Int      @id @default(autoincrement())
   title      String   @db.Text
   amount     Float
-  cat_id     Int
-  income_cat Category @relation(fields: [cat_id], references: [id])
+  cat_id      Int
+  category    Category @relation(fields: [cat_id],references:[id])
   createdAt  DateTime
   updatedAt  DateTime
   userId      Int
@@ -60,7 +60,7 @@ model Expense {
   title       String   @db.Text
   amount      Float
   cat_id      Int
-  expense_cat Category @relation(fields: [cat_id], references: [id])
+  category    Category @relation(fields: [cat_id],references:[id])
   createdAt   DateTime
   updatedAt   DateTime
   userId      Int

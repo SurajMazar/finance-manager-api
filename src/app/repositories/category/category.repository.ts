@@ -25,7 +25,7 @@ export class CategoryRepository implements CategoryRepositoryInterface{
           },
         },
         orderBy:{
-          createdAt:'desc'
+          createdAt:'asc'
         },
         include:{
           Category:true

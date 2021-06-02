@@ -6,4 +6,5 @@ export interface IncomeRepositoryInterface{
   index(req:Request):Promise<any>;
   store(req:Request):Promise<Income>;
   update(req:Request):Promise<Income>;
+  getByDate(req:Request):Promise<any>;
 }

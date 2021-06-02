@@ -18,6 +18,11 @@ app.use(cors());
 app.use(apiRoutes);
 
 // for 404 api 
+
+app.get('/*', (req:Request, res:Response)=>{
+  res.status(404).send("The request page doesn't exists");
+});
+
 app.get('/api/*', (req:Request, res:Response)=>{
   res.status(404).json(formatResponse({
     message:"404 error!! The requested route doesnt exists."

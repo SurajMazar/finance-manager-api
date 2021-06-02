@@ -1,4 +1,5 @@
 import { Request } from 'express';
+import { formatDate, getStartEndHr } from '../../../utils/common.utils';
 import { getAuthUser } from '../../../utils/jwt.utils';
 import prisma from '../../../utils/prisma.utils';
 // import { paginate } from '../../../utils/response.util';
@@ -115,6 +116,59 @@ export class ExpensesRepository implements ExpenseRepositoryInterface{
         }
       });
       return expense;
+    }catch(e){
+      throw e;
+    }
+  }
+
+
+
+  async getByDate(req:Request){
+    try{
+      const date = req.query.date || null ;
+      const user = getAuthUser(req);
+      const currentDate = date? new Date(date as string):new Date(formatDate());
+      const nextDate = new Date(currentDate.getTime() + 60 * 60 * 24 * 1000);
+
+      const expenses = await prisma.expense.findMany({
+        where:{
+          createdAt:{
+            gte:currentDate,
+            lt:nextDate,
+          },
+          userId:user.id,
+        },
+        include:{
+          category:true
+        }
+      })
+      const totalExpenses = await this.getTotalExpense(req);
+      return {expenses:expenses,total_expense:totalExpenses};
+    }catch(e){
+      throw e;
+    }
+  }
+
+  private async getTotalExpense(req:Request){
+    try{
+      const user = getAuthUser(req);
+      const expenses = await prisma.expense.findMany({
+        where:{
+          userId:user.id,
+        },
+        include:{
+          category:true
+        }
+      })
+
+      let total = 0;
+
+      expenses.forEach(e=>{
+        total = total + e.amount
+      })
+
+      return total;
+
     }catch(e){
       throw e;
     }

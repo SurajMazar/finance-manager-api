@@ -40,25 +40,25 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IncomeRepository = void 0;
+var common_utils_1 = require("../../../utils/common.utils");
+var jwt_utils_1 = require("../../../utils/jwt.utils");
 var prisma_utils_1 = __importDefault(require("../../../utils/prisma.utils"));
-var response_util_1 = require("../../../utils/response.util");
-var site_config_1 = require("../../config/site.config");
+var moment_1 = __importDefault(require("moment"));
 var IncomeRepository = /** @class */ (function () {
     function IncomeRepository() {
     }
     IncomeRepository.prototype.index = function (req) {
-        var _a, _b, _c;
+        var _a;
         return __awaiter(this, void 0, void 0, function () {
-            var page, keyword, startDate, endDate, category, cat_1, incomes, total, e_1;
-            return __generator(this, function (_d) {
-                switch (_d.label) {
+            var keyword, category, month, user, cat_1, incomes, e_1;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
-                        _d.trys.push([0, 3, , 4]);
-                        page = Number(req.query.page);
+                        _b.trys.push([0, 2, , 3]);
                         keyword = ((_a = (req.query.keyword)) === null || _a === void 0 ? void 0 : _a.toString()) || '';
-                        startDate = new Date(new Date().setDate(new Date((_b = req === null || req === void 0 ? void 0 : req.query) === null || _b === void 0 ? void 0 : _b.start_date).getDate() - 1)) || undefined;
-                        endDate = new Date(new Date().setDate(new Date((_c = req === null || req === void 0 ? void 0 : req.query) === null || _c === void 0 ? void 0 : _c.end_date).getDate() + 1)) || undefined;
                         category = req.query.category || undefined;
+                        month = req.query.month ? new Date(req.query.month) : new Date();
+                        user = jwt_utils_1.getAuthUser(req);
                         cat_1 = [];
                         if (category) {
                             if (Array.isArray(category)) {
@@ -78,53 +78,53 @@ var IncomeRepository = /** @class */ (function () {
                         return [4 /*yield*/, prisma_utils_1.default.income.findMany({
                                 where: {
                                     cat_id: {
-                                        in: cat_1,
+                                        in: cat_1
                                     },
+                                    userId: user.id,
                                     OR: {
                                         title: { contains: keyword },
                                     },
                                     createdAt: {
-                                        gte: startDate,
-                                        lt: endDate
-                                    },
+                                        gt: new Date(month.getFullYear(), month.getMonth(), 1),
+                                        lt: new Date(month.getFullYear(), month.getMonth() + 1, 1)
+                                    }
                                 },
                                 orderBy: {
                                     createdAt: 'desc'
                                 },
                                 include: {
-                                    income_cat: true
+                                    category: true
                                 },
-                                skip: page * site_config_1.ItemPerPage - site_config_1.ItemPerPage || 0,
+                                // skip:page * ItemPerPage - ItemPerPage || 0,
                             })];
                     case 1:
-                        incomes = _d.sent();
-                        return [4 /*yield*/, prisma_utils_1.default.income.count({ where: { cat_id: { in: cat_1, }, OR: { title: { contains: keyword }, }, createdAt: { gte: startDate, lt: endDate }, }, })];
+                        incomes = _b.sent();
+                        return [2 /*return*/, incomes];
                     case 2:
-                        total = _d.sent();
-                        return [2 /*return*/, response_util_1.paginate('income', page, total, incomes)];
-                    case 3:
-                        e_1 = _d.sent();
+                        e_1 = _b.sent();
                         throw new Error(e_1);
-                    case 4: return [2 /*return*/];
+                    case 3: return [2 /*return*/];
                 }
             });
         });
     };
     IncomeRepository.prototype.store = function (req) {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, title, amount, cat_id, income, e_2;
+            var _a, title, amount, cat_id, created_at, user, income, e_2;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
                         _b.trys.push([0, 2, , 3]);
-                        _a = req.body, title = _a.title, amount = _a.amount, cat_id = _a.cat_id;
+                        _a = req.body, title = _a.title, amount = _a.amount, cat_id = _a.cat_id, created_at = _a.created_at;
+                        user = jwt_utils_1.getAuthUser(req);
                         return [4 /*yield*/, prisma_utils_1.default.income.create({
                                 data: {
                                     title: title,
                                     amount: parseFloat(amount),
-                                    createdAt: new Date(),
-                                    updatedAt: new Date(),
+                                    createdAt: moment_1.default(created_at ? created_at : new Date()).toDate(),
+                                    updatedAt: moment_1.default(created_at ? created_at : new Date()).toDate(),
                                     cat_id: Number(cat_id),
+                                    userId: user.id
                                 }
                             })];
                     case 1:
@@ -132,6 +132,7 @@ var IncomeRepository = /** @class */ (function () {
                         return [2 /*return*/, income];
                     case 2:
                         e_2 = _b.sent();
+                        console.log(e_2);
                         throw e_2;
                     case 3: return [2 /*return*/];
                 }
@@ -154,8 +155,8 @@ var IncomeRepository = /** @class */ (function () {
                                 data: {
                                     title: title,
                                     amount: parseFloat(amount),
-                                    updatedAt: new Date(),
                                     cat_id: Number(cat_id),
+                                    updatedAt: new Date(),
                                 }
                             })];
                     case 1:
@@ -163,7 +164,77 @@ var IncomeRepository = /** @class */ (function () {
                         return [2 /*return*/, income];
                     case 2:
                         e_3 = _b.sent();
+                        console.log(e_3);
                         throw e_3;
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    IncomeRepository.prototype.getByDate = function (req) {
+        return __awaiter(this, void 0, void 0, function () {
+            var date, user, currentDate, nextDate, incomes, totalIncomes, e_4;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 3, , 4]);
+                        date = req.query.date || null;
+                        user = jwt_utils_1.getAuthUser(req);
+                        currentDate = date ? new Date(date) : new Date(common_utils_1.formatDate());
+                        nextDate = new Date(currentDate.getTime() + 60 * 60 * 24 * 1000);
+                        return [4 /*yield*/, prisma_utils_1.default.income.findMany({
+                                where: {
+                                    createdAt: {
+                                        gte: currentDate,
+                                        lt: nextDate,
+                                    },
+                                    userId: user.id,
+                                },
+                                include: {
+                                    category: true
+                                }
+                            })];
+                    case 1:
+                        incomes = _a.sent();
+                        return [4 /*yield*/, this.getTotalIncome(req, date)];
+                    case 2:
+                        totalIncomes = _a.sent();
+                        return [2 /*return*/, { incomes: incomes, total_income: totalIncomes }];
+                    case 3:
+                        e_4 = _a.sent();
+                        throw e_4;
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    IncomeRepository.prototype.getTotalIncome = function (req, date) {
+        return __awaiter(this, void 0, void 0, function () {
+            var user, currentDate, income, total_1, e_5;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        user = jwt_utils_1.getAuthUser(req);
+                        currentDate = moment_1.default(date || new Date()).startOf('day').toDate();
+                        return [4 /*yield*/, prisma_utils_1.default.income.findMany({
+                                where: {
+                                    userId: user.id,
+                                    createdAt: {
+                                        lt: currentDate,
+                                    }
+                                },
+                            })];
+                    case 1:
+                        income = _a.sent();
+                        total_1 = 0;
+                        income.forEach(function (e) {
+                            total_1 = total_1 + (e === null || e === void 0 ? void 0 : e.amount) || 0;
+                        });
+                        return [2 /*return*/, total_1];
+                    case 2:
+                        e_5 = _a.sent();
+                        throw e_5;
                     case 3: return [2 /*return*/];
                 }
             });

@@ -18,6 +18,9 @@ app.use(express_1.default.urlencoded({ extended: false }));
 app.use(cors_1.default());
 app.use(routes_1.default);
 // for 404 api 
+app.get('/*', function (req, res) {
+    res.status(404).send("The request page doesn't exists");
+});
 app.get('/api/*', function (req, res) {
     res.status(404).json(response_util_1.formatResponse({
         message: "404 error!! The requested route doesnt exists."

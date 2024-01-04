@@ -40,9 +40,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CategoryRepository = void 0;
+var jwt_utils_1 = require("../../../utils/jwt.utils");
 var prisma_utils_1 = __importDefault(require("../../../utils/prisma.utils"));
-var response_util_1 = require("../../../utils/response.util");
-var site_config_1 = require("../../config/site.config");
 var CategoryRepository = /** @class */ (function () {
     function CategoryRepository() {
     }
@@ -50,7 +49,7 @@ var CategoryRepository = /** @class */ (function () {
     CategoryRepository.prototype.index = function (req) {
         var _a;
         return __awaiter(this, void 0, void 0, function () {
-            var page, keyword, type, categories, total, e_1;
+            var page, keyword, type, user, categories, total, e_1;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -58,32 +57,39 @@ var CategoryRepository = /** @class */ (function () {
                         page = Number(req.query.page);
                         keyword = ((_a = (req.query.keyword)) === null || _a === void 0 ? void 0 : _a.toString()) || '';
                         type = req.query.type;
+                        user = jwt_utils_1.getAuthUser(req);
                         return [4 /*yield*/, prisma_utils_1.default.category.findMany({
                                 where: {
                                     parent_id: null,
                                     type: type,
+                                    userId: user.id,
                                     OR: {
                                         name: { contains: keyword },
                                     },
                                 },
                                 orderBy: {
-                                    createdAt: 'desc'
+                                    createdAt: 'asc'
                                 },
                                 include: {
                                     Category: true
                                 },
-                                skip: page * site_config_1.ItemPerPage - site_config_1.ItemPerPage || 0,
+                                // skip:page * ItemPerPage - ItemPerPage || 0,
                             })];
                     case 1:
                         categories = _b.sent();
                         return [4 /*yield*/, prisma_utils_1.default.category.count({
                                 where: {
                                     parent_id: null,
-                                }
+                                    type: type,
+                                    userId: user.id,
+                                    OR: {
+                                        name: { contains: keyword },
+                                    },
+                                },
                             })];
                     case 2:
                         total = _b.sent();
-                        return [2 /*return*/, response_util_1.paginate('categories', page, total, categories)];
+                        return [2 /*return*/, categories];
                     case 3:
                         e_1 = _b.sent();
                         throw e_1;
@@ -95,11 +101,12 @@ var CategoryRepository = /** @class */ (function () {
     // store category
     CategoryRepository.prototype.store = function (req) {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, name_1, description, type, parent_id, cat_id, category;
+            var _a, name_1, description, type, parent_id, cat_id, user, category;
             return __generator(this, function (_b) {
                 try {
                     _a = req.body, name_1 = _a.name, description = _a.description, type = _a.type, parent_id = _a.parent_id;
                     cat_id = Number(parent_id);
+                    user = jwt_utils_1.getAuthUser(req);
                     category = prisma_utils_1.default.category.create({
                         data: {
                             name: name_1,
@@ -108,7 +115,8 @@ var CategoryRepository = /** @class */ (function () {
                             createdAt: new Date(),
                             updatedAt: new Date(),
                             parent_id: cat_id ? cat_id : null,
-                        }
+                            userId: user.id
+                        },
                     });
                     return [2 /*return*/, category];
                 }
@@ -141,7 +149,10 @@ var CategoryRepository = /** @class */ (function () {
                                     type: type,
                                     updatedAt: new Date(),
                                     parent_id: cat_id ? cat_id : null,
-                                }
+                                },
+                                include: {
+                                    Category: true
+                                },
                             })];
                     case 1:
                         category = _b.sent();
